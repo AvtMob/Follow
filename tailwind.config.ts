@@ -1,16 +1,17 @@
-import "./cssAsPlugin"
+import "./configs/tw-css-plugin"
 
 import path from "node:path"
 
 import { getIconCollections, iconsPlugin } from "@egoist/tailwindcss-icons"
 import { cleanupSVG, importDirectorySync, isEmptyColor, parseColors, runSVGO } from "@iconify/tools"
 import { compareColors, stringToColor } from "@iconify/utils/lib/colors"
+import plugin from "tailwindcss/plugin"
 import resolveConfig from "tailwindcss/resolveConfig"
 
 /** @type {import('tailwindcss').Config} */
 export default resolveConfig({
   darkMode: ["class", '[data-theme="dark"]'],
-  content: ["./src/**/*.{ts,tsx}"],
+  content: ["./apps/renderer/**/*.{ts,tsx}", "./apps/web/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -26,6 +27,16 @@ export default resolveConfig({
         theme: "var(--fo-font-family)",
         default: "SN pro, sans-serif, system-ui",
       },
+      cursor: {
+        button: "var(--cursor-button)",
+        select: "var(--cursor-select)",
+        checkbox: "var(--cursor-checkbox)",
+        link: "var(--cursor-link)",
+        menu: "var(--cursor-menu)",
+        radio: "var(--cursor-radio)",
+        switch: "var(--cursor-switch)",
+        card: "var(--cursor-card)",
+      },
       colors: {
         border: "hsl(var(--border) / <alpha-value>)",
         background: "hsl(var(--background) / <alpha-value>)",
@@ -39,10 +50,7 @@ export default resolveConfig({
           DEFAULT: "hsl(var(--muted) / <alpha-value>)",
           foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
         },
-        accent: {
-          DEFAULT: "#ff5c00",
-          foreground: "hsl(var(--fo-text-primary), <alpha-value>)",
-        },
+        accent: "hsl(var(--fo-a) / <alpha-value>)",
 
         popover: {
           DEFAULT: "hsl(var(--popover) / <alpha-value>)",
@@ -60,7 +68,7 @@ export default resolveConfig({
         theme: {
           // https://uicolors.app/create
           accent: {
-            DEFAULT: "#ff5c00",
+            DEFAULT: "hsl(var(--fo-a) / <alpha-value>)",
             50: "#fff7ec",
             100: "#ffeed3",
             200: "#ffd9a5",
@@ -74,7 +82,7 @@ export default resolveConfig({
             950: "#461304",
           },
 
-          vibrancyFg: "hsl(var(--fo-vibrancy-foreground), <alpha-value>)",
+          vibrancyFg: "hsl(var(--fo-vibrancy-foreground) / <alpha-value>)",
           vibrancyBg: "var(--fo-vibrancy-background)",
 
           item: {
@@ -82,13 +90,13 @@ export default resolveConfig({
             hover: "var(--fo-item-hover)",
           },
 
-          inactive: "hsl(var(--fo-inactive), <alpha-value>)",
-          disabled: "hsl(var(--fo-disabled), <alpha-value>)",
+          inactive: "hsl(var(--fo-inactive) / <alpha-value>)",
+          disabled: "hsl(var(--fo-disabled) / <alpha-value>)",
 
-          foreground: "hsl(var(--fo-text-primary), <alpha-value>)",
+          foreground: "hsl(var(--fo-text-primary) / <alpha-value>)",
           background: "var(--fo-background)",
 
-          "foreground-hover": "hsl(var(--fo-text-primary-hover), <alpha-value>)",
+          "foreground-hover": "hsl(var(--fo-text-primary-hover) / <alpha-value>)",
 
           modal: {
             background: "var(--fo-modal-background)",
@@ -115,6 +123,7 @@ export default resolveConfig({
       }),
     },
   },
+
   plugins: [
     iconsPlugin({
       collections: {
@@ -125,7 +134,12 @@ export default resolveConfig({
     require("tailwindcss-animate"),
     require("@tailwindcss/container-queries"),
     require("@tailwindcss/typography"),
-    require("./src/renderer/src/styles/tailwind-extend.css"),
+    require("./apps/renderer/src/styles/tailwind-extend.css"),
+    plugin(({ addVariant }) => {
+      addVariant("f-motion-reduce", '[data-motion-reduce="true"] &')
+      addVariant("group-motion-reduce", ':merge(.group)[data-motion-reduce="true"] &')
+      addVariant("peer-motion-reduce", ':merge(.peer)[data-motion-reduce="true"] ~ &')
+    }),
   ],
 })
 

@@ -21,6 +21,7 @@ env:
   VITE_IMGPROXY_URL: ${{ vars.VITE_IMGPROXY_URL }}
   VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
   VITE_POSTHOG_KEY: ${{ vars.VITE_POSTHOG_KEY }}
+  NODE_OPTIONS: --max-old-space-size=8192
 
 jobs:
   release:
@@ -30,6 +31,11 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
+
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
 
     steps:
       - name: Check out Git repository Fully
@@ -44,14 +50,6 @@ jobs:
         with:
           fetch-depth: 1
           lfs: true
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ matrix.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ matrix.os }}-
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -139,14 +137,29 @@ jobs:
           path: |
             out/make/**/*.dmg
           retention-days: 90
+
+      - name: Generate artifact attestation
+        if: github.ref_type == 'tag' || github.event.inputs.tag_version != ''
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: |
+            out/make/**/*.dmg
+            out/make/**/*.zip
+            out/make/**/*.exe
+            out/make/**/*.AppImage
+            out/make/**/*.yml
+
       - run: npx changelogithub
         if: github.ref_type == 'tag' || github.event.inputs.tag_version != ''
         continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup Version
         id: version
         uses: ./.github/actions/setup-version
+
       - name: Create Release Draft
         if: github.ref_type == 'tag' || github.event.inputs.tag_version != ''
         uses: softprops/action-gh-release@v2

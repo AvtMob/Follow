@@ -13,7 +13,7 @@ import type { env as EnvType } from "./src/env"
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url))
 const isCI = process.env.CI === "true" || process.env.CI === "1"
-const ROOT = "./src/renderer"
+const ROOT = "./apps/renderer"
 
 function htmlPlugin(env: typeof EnvType): PluginOption {
   return {
@@ -78,10 +78,17 @@ export default ({ mode }) => {
           main: resolve(ROOT, "/index.html"),
           __debug_proxy: resolve(ROOT, "/__debug_proxy.html"),
         },
+        output: {
+          // 10KB
+          experimentalMinChunkSize: 10_000,
+        },
       },
     },
     server: {
       port: 2233,
+      watch: {
+        ignored: ["**/dist/**", "**/out/**", "**/public/**", ".git/**"],
+      },
     },
     plugins: [
       ...((viteRenderBaseConfig.plugins ?? []) as any),
@@ -94,7 +101,6 @@ export default ({ mode }) => {
         }),
       htmlPlugin(typedEnv),
       mkcert(),
-
       devPrint(),
 
       process.env.ANALYZER && analyzer(),
